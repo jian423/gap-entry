@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>常州仓人力缺口看板</title>
+<style>
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(135deg,#6d28d9,#a21caf);color:#fff;
+    height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .box{padding:32px 40px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);max-width:90%}
+  h1{font-size:22px;margin:0 0 12px}
+  #msg{font-size:15px;opacity:.95;line-height:1.7}
+  a{color:#fde68a;word-break:break-all}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <div class="box">
+    <h1>常州仓人力缺口看板</h1>
+    <div id="msg"><span class="spin"></span>正在跳转到最新看板…</div>
+  </div>
+<script>
+  // 入口页从同仓库的 gap_url.json 读取最新隧道地址并跳转。
+  // 部署在 GitHub Pages 或 EdgeOne Pages 时，gap_url.json 与 index.html 同源，可直接相对路径读取。
+  fetch('./gap_url.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(d => {
+      if (d && d.url) { window.location.replace(d.url); }
+      else { fallback('入口配置暂未就绪'); }
+    })
+    .catch(() => fallback('跳转服务暂不可达，请稍后刷新或联系管理员'));
+  function fallback(txt){
+    var u = ''; try { u = JSON.parse(sessionStorage.getItem('gap_last')||'{}').url || ''; } catch(e){}
+    document.getElementById('msg').innerHTML = txt +
+      (u ? '<br><a href="'+u+'" target="_blank">或点此打开（上次地址）</a>' : '');
+  }
+</script>
+</body>
+</html>
