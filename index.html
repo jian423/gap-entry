@@ -22,15 +22,20 @@
     <div id="msg"><span class="spin"></span>正在跳转到最新看板…</div>
   </div>
 <script>
-  // 入口页从同仓库的 gap_url.json 读取最新隧道地址并跳转。
-  // 部署在 GitHub Pages 或 EdgeOne Pages 时，gap_url.json 与 index.html 同源，可直接相对路径读取。
-  fetch('./gap_url.json?t=' + Date.now())
-    .then(r => r.json())
-    .then(d => {
-      if (d && d.url) { window.location.replace(d.url); }
-      else { fallback('入口配置暂未就绪'); }
+  // 入口页直接读取 GitHub 仓库里的 gap_url.json（CORS 已开启 access-control-allow-origin:*），
+  // 这样无论本页部署在 GitHub Pages 还是 EdgeOne Pages，地址都实时跟随看门狗更新，零延迟。
+  var RAW = 'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json';
+  fetch(RAW + '?t=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.url) {
+        try { sessionStorage.setItem('gap_last', JSON.stringify({url:d.url})); } catch(e){}
+        window.location.replace(d.url);
+      } else {
+        fallback('入口配置暂未就绪');
+      }
     })
-    .catch(() => fallback('跳转服务暂不可达，请稍后刷新或联系管理员'));
+    .catch(function(){ fallback('跳转服务暂不可达，请稍后刷新或联系管理员'); });
   function fallback(txt){
     var u = ''; try { u = JSON.parse(sessionStorage.getItem('gap_last')||'{}').url || ''; } catch(e){}
     document.getElementById('msg').innerHTML = txt +
