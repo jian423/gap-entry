@@ -22,25 +22,33 @@
     <div id="msg"><span class="spin"></span>正在跳转到最新看板…</div>
   </div>
 <script>
-  // 入口页直接读取 GitHub 仓库里的 gap_url.json（CORS 已开启 access-control-allow-origin:*），
-  // 这样无论本页部署在 GitHub Pages 还是 EdgeOne Pages，地址都实时跟随看门狗更新，零延迟。
-  var RAW = 'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json';
-  fetch(RAW + '?t=' + Date.now())
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (d && d.url) {
-        try { sessionStorage.setItem('gap_last', JSON.stringify({url:d.url})); } catch(e){}
-        window.location.replace(d.url);
-      } else {
-        fallback('入口配置暂未就绪');
-      }
-    })
-    .catch(function(){ fallback('跳转服务暂不可达，请稍后刷新或联系管理员'); });
-  function fallback(txt){
-    var u = ''; try { u = JSON.parse(sessionStorage.getItem('gap_last')||'{}').url || ''; } catch(e){}
-    document.getElementById('msg').innerHTML = txt +
-      (u ? '<br><a href="'+u+'" target="_blank">或点此打开（上次地址）</a>' : '');
+  // 同源优先（GitHub Pages 自身 serve 仓库根目录的 gap_url.json，零跨域零 CORS）
+  // 失败回退到 raw.githubusercontent.com（确保 EdgeOne / 其他部署也能用）
+  var SOURCES = [
+    './gap_url.json',
+    'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'
+  ];
+  function tryNext(i){
+    if (i >= SOURCES.length) {
+      var last = '';
+      try { last = JSON.parse(sessionStorage.getItem('gap_last')||'{}').url || ''; } catch(e){}
+      var link = last ? '<br><a href="'+last+'" target="_blank">或点此打开（上次地址）</a>' : '';
+      document.getElementById('msg').innerHTML = '跳转服务暂不可达，请稍后刷新或联系管理员' + link;
+      return;
+    }
+    fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
+      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+      .then(function(d){
+        if (d && d.url) {
+          try { sessionStorage.setItem('gap_last', JSON.stringify({url:d.url})); } catch(e){}
+          window.location.replace(d.url);
+        } else {
+          tryNext(i+1);
+        }
+      })
+      .catch(function(){ tryNext(i+1); });
   }
+  tryNext(0);
 </script>
 </body>
 </html>
