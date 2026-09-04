@@ -14,16 +14,29 @@
   a{color:#fde68a;word-break:break-all}
   .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}
   @keyframes s{to{transform:rotate(360deg)}}
+  .tip{font-size:13px;opacity:.8;margin-top:14px;line-height:1.6}
 </style>
 </head>
 <body>
   <div class="box">
     <h1>常州仓人力缺口看板</h1>
-    <div id="msg"><span class="spin"></span>正在跳转到最新看板…</div>
+    <div id="msg"><span class="spin"></span>正在连接看板…</div>
   </div>
 <script>
-  // 同源优先（GitHub Pages 自身 serve 仓库根目录的 gap_url.json，零跨域零 CORS）
-  // 失败回退到 raw.githubusercontent.com（确保 EdgeOne / 其他部署也能用）
+  // ============================================================
+  // 智能分流（2026-09-04）：
+  //   1) 先探测本机实时服务 server.js（http://localhost:3000）
+  //      - 可达 = 用户在自己的电脑上 → 跳【真·实时版】
+  //        刷新按钮会直接跑飞书脚本，约 7 秒拿到最新数据
+  //      - 不可达 = 同事/其他设备 → 跳【CloudStudio 静态版】
+  //        数据为最近一次同步的快照
+  //   2) 加 ?static=1 可跳过探测，强制进静态版（用于验证同事看到的效果）
+  // ============================================================
+  var LOCAL_URL   = 'http://localhost:3000';
+  var PROBE_PATH  = '/api/refresh-status';   // server.js 已有，轻量且带 CORS 头
+  var PROBE_MS    = 1500;                    // 探测超时，别让用户干等
+
+  // 静态版跳转逻辑（原逻辑：读 gap_url.json → 跳 CloudStudio 最新链接）
   var SOURCES = [
     './gap_url.json',
     'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'
@@ -33,7 +46,9 @@
       var last = '';
       try { last = JSON.parse(sessionStorage.getItem('gap_last')||'{}').url || ''; } catch(e){}
       var link = last ? '<br><a href="'+last+'" target="_blank">或点此打开（上次地址）</a>' : '';
-      document.getElementById('msg').innerHTML = '跳转服务暂不可达，请稍后刷新或联系管理员' + link;
+      document.getElementById('msg').innerHTML =
+        '跳转服务暂不可达，请稍后刷新或联系管理员' + link +
+        '<div class="tip">如果你就在本机，也可直接访问 <a href="'+LOCAL_URL+'" target="_blank">'+LOCAL_URL+'</a></div>';
       return;
     }
     fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
@@ -48,7 +63,37 @@
       })
       .catch(function(){ tryNext(i+1); });
   }
-  tryNext(0);
+
+  // 探测本机 server.js
+  function probeLocal(cb){
+    var done = false;
+    var timer = setTimeout(function(){ if(!done){ done = true; cb(false); } }, PROBE_MS);
+    function finish(ok){ if(done) return; done = true; clearTimeout(timer); cb(ok); }
+    try {
+      fetch(LOCAL_URL + PROBE_PATH + '?t=' + Date.now(), {cache:'no-store', mode:'cors'})
+        .then(function(r){ if(!r.ok) throw new Error('bad'); return r.json(); })
+        .then(function(d){ finish(!!d && typeof d.refreshing !== 'undefined'); })
+        .catch(function(){ finish(false); });
+    } catch(e) { finish(false); }
+  }
+
+  var forceStatic = /[?&]static=1/.test(location.search);
+
+  if (forceStatic) {
+    document.getElementById('msg').innerHTML = '<span class="spin"></span>正在跳转到共享看板（静态版）…';
+    tryNext(0);
+  } else {
+    probeLocal(function(ok){
+      if (ok) {
+        // 本机实时服务在跑 → 真·实时版（带自动刷新一次，进来就是最新）
+        document.getElementById('msg').innerHTML = '<span class="spin"></span>已连接本机实时服务，正在打开…';
+        window.location.replace(LOCAL_URL + '?autorefresh=1');
+      } else {
+        // 非本机 → 静态快照版（同事看到的）
+        tryNext(0);
+      }
+    });
+  }
 </script>
 </body>
 </html>
