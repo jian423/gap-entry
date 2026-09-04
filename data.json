@@ -1,0 +1,265 @@
+{
+  "date": "2026-09-03",
+  "departments": {
+    "质检验机": {
+      "c5_groups": [
+        {
+          "name": "一人屋",
+          "active": 11,
+          "hc": 11,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 0,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "功能一组",
+          "active": 43,
+          "hc": 45,
+          "leaving": 2,
+          "trial": 0,
+          "gap": 4,
+          "recruit": 5,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "拆修一组",
+          "active": 31,
+          "hc": 31,
+          "leaving": 1,
+          "trial": 0,
+          "gap": 1,
+          "recruit": 1,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "外观一组",
+          "active": 20,
+          "hc": 19,
+          "leaving": 1,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 2,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "拆修二组",
+          "active": 16,
+          "hc": 16,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 0,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "笔记本",
+          "active": 28,
+          "hc": 28,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 0,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "功能二组",
+          "active": 5,
+          "hc": 5,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 0,
+          "c4s": [
+            "质检验机"
+          ]
+        },
+        {
+          "name": "功能&外观一组",
+          "active": 1,
+          "hc": 1,
+          "leaving": 1,
+          "trial": 2,
+          "gap": -1,
+          "recruit": 0,
+          "c4s": [
+            "质检验机"
+          ]
+        }
+      ],
+      "total": {
+        "active": 155,
+        "hc": 156,
+        "leaving": 5,
+        "trial": 2,
+        "gap": 4,
+        "recruit": 8
+      }
+    },
+    "质检辅助": {
+      "c5_groups": [
+        {
+          "name": "APP一组",
+          "active": 51,
+          "hc": 56,
+          "leaving": 0,
+          "trial": 4,
+          "gap": 1,
+          "recruit": 5,
+          "c4s": [
+            "质检辅助"
+          ]
+        },
+        {
+          "name": "隐私清除",
+          "active": 15,
+          "hc": 15,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 0,
+          "c4s": [
+            "质检辅助"
+          ]
+        },
+        {
+          "name": "自动化支持",
+          "active": 30,
+          "hc": 32,
+          "leaving": 0,
+          "trial": 3,
+          "gap": -1,
+          "recruit": 3,
+          "c4s": [
+            "质检辅助"
+          ]
+        },
+        {
+          "name": "拍照一组",
+          "active": 32,
+          "hc": 35,
+          "leaving": 1,
+          "trial": 0,
+          "gap": 4,
+          "recruit": 4,
+          "c4s": [
+            "质检辅助"
+          ]
+        }
+      ],
+      "total": {
+        "active": 128,
+        "hc": 138,
+        "leaving": 1,
+        "trial": 7,
+        "gap": 4,
+        "recruit": 12
+      }
+    },
+    "仓储": {
+      "c5_groups": [
+        {
+          "name": "发货三组",
+          "active": 25,
+          "hc": 25,
+          "leaving": 0,
+          "trial": 1,
+          "gap": -1,
+          "recruit": 1,
+          "c4s": [
+            "仓储"
+          ]
+        },
+        {
+          "name": "收货",
+          "active": 29,
+          "hc": 29,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 0,
+          "recruit": 0,
+          "c4s": [
+            "仓储"
+          ]
+        },
+        {
+          "name": "发货二组",
+          "active": 20,
+          "hc": 21,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 1,
+          "recruit": 2,
+          "c4s": [
+            "仓储"
+          ]
+        },
+        {
+          "name": "立库服务支持",
+          "active": 6,
+          "hc": 7,
+          "leaving": 0,
+          "trial": 2,
+          "gap": -1,
+          "recruit": 0,
+          "c4s": [
+            "仓储"
+          ]
+        },
+        {
+          "name": "发货一组",
+          "active": 21,
+          "hc": 22,
+          "leaving": 0,
+          "trial": 0,
+          "gap": 1,
+          "recruit": 0,
+          "c4s": [
+            "仓储"
+          ]
+        }
+      ],
+      "total": {
+        "active": 101,
+        "hc": 104,
+        "leaving": 0,
+        "trial": 3,
+        "gap": 0,
+        "recruit": 3
+      }
+    }
+  },
+  "total": {
+    "active": 398,
+    "hc": 398,
+    "leaving": 6,
+    "trial": 12,
+    "gap": -6,
+    "recruit": 9
+  },
+  "remarks": {
+    "功能&外观二组": "补1",
+    "拍照一组": "补拍照4",
+    "外观一组": "补2",
+    "发货二组": "补2",
+    "APP一组": "APP1，前后拍摄2，移交2",
+    "自动化支持": "哥斯拉1，移交2",
+    "功能一组": "补5",
+    "拆修一组": "暂不补",
+    "发货三组": "补兼职1"
+  },
+  "updated": "2026-09-04T01:21:42.510Z"
+}
