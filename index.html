@@ -85,9 +85,9 @@
   } else {
     probeLocal(function(ok){
       if (ok) {
-        // 本机实时服务在跑 → 真·实时版（带自动刷新一次，进来就是最新）
+        // 本机实时服务在跑 → 真·实时版（app.html 打开即自动静默刷新飞书）
         document.getElementById('msg').innerHTML = '<span class="spin"></span>已连接本机实时服务，正在打开…';
-        window.location.replace(LOCAL_URL + '?autorefresh=1');
+        window.location.replace(LOCAL_URL);
       } else {
         // 非本机 → 静态快照版（同事看到的）
         tryNext(0);
