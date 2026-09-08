@@ -13,107 +13,54 @@
   #msg{font-size:15px;opacity:.95;line-height:1.7;margin-bottom:18px}
   .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}
   @keyframes s{to{transform:rotate(360deg)}}
-  .tip{font-size:13px;opacity:.85;line-height:1.7;margin-bottom:18px}
-  .btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:8px}
-  a.btn{display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:600;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;transition:transform .15s,box-shadow .15s}
-  a.btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.25)}
-  a.btn-rt{background:#5CB85C}
-  a.btn-st{background:#E8A838}
-  a.btn:disabled,.btn-row.hidden{display:none!important}
-  .small{font-size:12px;opacity:.7;margin-top:14px;line-height:1.6}
+  .small{font-size:12px;opacity:.75;margin-top:18px;line-height:1.7}
   .small a{color:#fde68a}
 </style>
 </head>
 <body>
   <div class="box">
     <h1>常州仓人力缺口看板</h1>
-    <div id="msg"><span class="spin"></span>正在探测本机实时服务…</div>
-
-    <div id="chooseBlock" class="btn-row hidden">
-      <a id="btnRealtime" class="btn btn-rt" href="http://localhost:3000">⚡ 实时版（本机）</a>
-      <a id="btnStatic"   class="btn btn-st" href="#" onclick="goStatic();return false">📷 共享快照版</a>
-    </div>
-
-    <div class="small" id="hint"></div>
+    <div id="msg"><span class="spin"></span>正在打开看板…</div>
   </div>
 <script>
   // ============================================================
-  // 入口页（智能分流 + 兜底双选）：
-  //   1) 用最宽松的 no-cors 探测 http://localhost:3000
-  //      （任何响应 = 通；网络错误/超时 = 不通）
-  //   2) 通 → 自动跳 localhost:3000（真·实时版）
-  //   3) 不通/超时 → 显示双按钮让你手动选，绝不偷偷跳走
-  //   4) ?static=1 可跳过探测，强制静态版
+  // 入口页（2026-09-08 终态）：
+  //   默认行为 → 直接跳【共享快照版】（所有设备都能开，永久稳定）
+  //   ?me=1   → 跳【实时版】（仅本机 server.js 在跑时可用）
+  //   实时版与快照版都已是稳定链接（一个对内、一个对外）
   // ============================================================
   var LOCAL_URL = 'http://localhost:3000';
-  var PROBE_MS  = 2000;
 
-  // 静态版跳转逻辑
+  // 共享快照版（CloudStudio）跳转逻辑
   var SOURCES = [
     './gap_url.json',
     'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'
   ];
-  function tryNext(i){
-    if (i >= SOURCES.length) {
-      document.getElementById('msg').innerHTML = '⚠️ 跳转服务暂不可达';
-      document.getElementById('hint').innerHTML = '请联系管理员，或直接访问 <a href="'+LOCAL_URL+'" target="_blank">'+LOCAL_URL+'</a>';
-      document.getElementById('chooseBlock').classList.remove('hidden');
-      return;
-    }
-    fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
-      .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
-      .then(function(d){
-        if (d && d.url) window.location.replace(d.url);
-        else tryNext(i+1);
-      })
-      .catch(function(){ tryNext(i+1); });
-  }
-
-  function goStatic(){ tryNext(0); }
-
-  // no-cors 探测：响应是 opaque 也 resolve，只有网络错误才 reject
-  function probeLocal(cb){
-    var done = false;
-    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    var timer = setTimeout(function(){
-      if (done) return;
-      done = true;
-      if (ctl) try { ctl.abort(); } catch(e){}
-      cb(false, 'timeout');
-    }, PROBE_MS);
-    var opts = { cache:'no-store', mode:'no-cors' };
-    if (ctl) opts.signal = ctl.signal;
-    try {
-      fetch(LOCAL_URL + '/api/refresh-status?t=' + Date.now(), opts)
-        .then(function(){ if(done) return; done = true; clearTimeout(timer); cb(true); })
-        .catch(function(e){ if(done) return; done = true; clearTimeout(timer); cb(false, e && e.name || 'err'); });
-    } catch (e) {
-      if (done) return; done = true; clearTimeout(timer); cb(false, e && e.name || 'err');
-    }
-  }
-
-  function showChoose(reason){
-    document.getElementById('msg').innerHTML = '未连上本机实时服务（请手动选择）：';
-    var extra = '';
-    if (reason === 'timeout') extra = '<br>探测超时（'+PROBE_MS+'ms），可能本机服务未启动，或浏览器禁止 HTTPS→localhost HTTP。';
-    document.getElementById('hint').innerHTML = extra + '<br>实时版：直接连你本机 server.js，<b>点刷新 7 秒出飞书最新</b>。仅本机可用。<br>共享快照版：所有设备可见，看到的是最近一次同步的数据（云端推送）。';
-    document.getElementById('chooseBlock').classList.remove('hidden');
-  }
-
-  var forceStatic = /[?&]static=1/.test(location.search);
-
-  if (forceStatic) {
-    document.getElementById('msg').innerHTML = '<span class="spin"></span>正在打开共享快照版…';
-    goStatic();
-  } else {
-    probeLocal(function(ok, reason){
-      if (ok) {
-        document.getElementById('msg').innerHTML = '<span class="spin"></span>已连接本机，正在打开实时版…';
-        window.location.replace(LOCAL_URL);
-      } else {
-        showChoose(reason);
+  function goStatic(){
+    var i = 0;
+    function next(){
+      if (i >= SOURCES.length) {
+        document.getElementById('msg').innerHTML = '⚠️ 共享看板暂不可达，请稍后重试';
+        return;
       }
-    });
+      fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+        .then(function(d){
+          if (d && d.url) window.location.replace(d.url);
+          else next();
+        })
+        .catch(function(){ i++; next(); });
+    }
+    next();
+  }
+
+  var isMe = /[?&]me=1/.test(location.search);
+
+  if (isMe) {
+    document.getElementById('msg').innerHTML = '<span class="spin"></span>正在打开本机实时版…';
+    window.location.replace(LOCAL_URL);
+  } else {
+    goStatic();
   }
 </script>
 </body>
