@@ -8,12 +8,12 @@
   body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
     background:linear-gradient(135deg,#6d28d9,#a21caf);color:#fff;
     min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
-  .box{padding:28px 36px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);max-width:560px;width:100%}
+  .box{padding:28px 36px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);max-width:520px;width:100%}
   h1{font-size:22px;margin:0 0 10px}
-  #msg{font-size:15px;opacity:.95;line-height:1.7;margin-bottom:18px}
+  #msg{font-size:15px;opacity:.95;line-height:1.7}
   .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}
   @keyframes s{to{transform:rotate(360deg)}}
-  .small{font-size:12px;opacity:.75;margin-top:18px;line-height:1.7}
+  .small{font-size:12px;opacity:.75;margin-top:16px;line-height:1.7}
   .small a{color:#fde68a}
 </style>
 </head>
@@ -21,47 +21,51 @@
   <div class="box">
     <h1>常州仓人力缺口看板</h1>
     <div id="msg"><span class="spin"></span>正在打开看板…</div>
+    <div class="small" id="hint"></div>
   </div>
 <script>
   // ============================================================
-  // 入口页（2026-09-08 终态）：
-  //   默认行为 → 直接跳【共享快照版】（所有设备都能开，永久稳定）
-  //   ?me=1   → 跳【实时版】（仅本机 server.js 在跑时可用）
-  //   实时版与快照版都已是稳定链接（一个对内、一个对外）
+  // 入口页（2026-09-11 加固版）
+  //  - 硬编码当前有效的看板地址（CloudStudio 永久链接）
+  //  - gap_url.json 只作为"可被覆盖"的可选源，且会做安全性校验：
+  //    凡是 trycloudflare / localhost.run 这类临时隧道域名一律丢弃
+  //    （历史坑：9-10 隧道看门狗把已回收的临时域名写进 gap_url.json，
+  //     导致入口页跳死链、用户看到"无法连接"）
   // ============================================================
-  var LOCAL_URL = 'http://localhost:3000';
+  var HARD_CODED_URL = 'https://62208a9a7b8b487bb815254bada41cc5.app.codebuddy.work';
+  var LOCAL_URL      = 'http://localhost:3000';
+  var SOURCES = ['./gap_url.json', 'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'];
 
-  // 共享快照版（CloudStudio）跳转逻辑
-  var SOURCES = [
-    './gap_url.json',
-    'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'
-  ];
-  function goStatic(){
-    var i = 0;
-    function next(){
-      if (i >= SOURCES.length) {
-        document.getElementById('msg').innerHTML = '⚠️ 共享看板暂不可达，请稍后重试';
-        return;
-      }
-      fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
-        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
-        .then(function(d){
-          if (d && d.url) window.location.replace(d.url);
-          else next();
-        })
-        .catch(function(){ i++; next(); });
-    }
-    next();
+  // 临时隧道域名 = 死链，坚决不用
+  function isDeadTunnelUrl(u) {
+    if (!u) return true;
+    return /trycloudflare\.com|localhost\.run|loca\.lt|ngrok|serveo|lhr\.life/i.test(u);
   }
 
-  var isMe = /[?&]me=1/.test(location.search);
+  function go(u) { window.location.replace(u); }
 
-  if (isMe) {
+  // 读 gap_url.json（可选），校验通过才用，否则用硬编码地址
+  function trySource(i) {
+    if (i >= SOURCES.length) { go(HARD_CODED_URL); return; }
+    fetch(SOURCES[i] + '?t=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (d) {
+        if (d && d.url && !isDeadTunnelUrl(d.url)) go(d.url);
+        else trySource(i + 1);   // 是死链/空 → 换下一个源，最终兜底用硬编码
+      })
+      .catch(function () { trySource(i + 1); });
+  }
+
+  // ?me=1 → 本机实时版（server.js）
+  if (/[?&]me=1/.test(location.search)) {
     document.getElementById('msg').innerHTML = '<span class="spin"></span>正在打开本机实时版…';
-    window.location.replace(LOCAL_URL);
+    go(LOCAL_URL);
   } else {
-    goStatic();
+    trySource(0);
   }
+
+  // 3 秒还没跳走（网络慢/被拦）→ 直接兜底到硬编码地址，不让用户干等
+  setTimeout(function () { go(HARD_CODED_URL); }, 3000);
 </script>
 </body>
 </html>
