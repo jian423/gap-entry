@@ -1,444 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>常州仓人力缺口看板</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --primary:#6E87B0;--primary-dark:#5A7499;--light:#B2C1D6;
-  --bg1:#EDE5E3;--bg2:#DBBACB;
-  --gap-red:#D9534F;--gap-green:#5CB85C;--gap-gray:#999;
-  --white:#fff;--text:#333;--text-light:#666;--text-muted:#999;
-  --border:#e8e8e8;--shadow:0 2px 12px rgba(0,0,0,.06);--shadow-lg:0 8px 32px rgba(0,0,0,.16);
-  --radius:12px;
-}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%);min-height:100vh;color:var(--text);font-size:14px}
-
-/* Login */
-#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.login-card{background:#fff;border-radius:20px;padding:40px;width:400px;max-width:90vw;box-shadow:var(--shadow-lg);text-align:center}
-.login-icon{font-size:48px;margin-bottom:16px}
-.login-title{font-size:20px;font-weight:700;color:var(--primary);margin-bottom:8px}
-.login-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:28px}
-.login-input{width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;text-align:center;letter-spacing:2px;transition:border-color .2s}
-.login-input:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 4px rgba(110,135,176,.1)}
-.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:16px;transition:all .2s}
-.login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(110,135,176,.3)}
-.login-btn:disabled{opacity:.6;cursor:wait}
-.login-error{color:var(--gap-red);font-size:13px;margin-top:12px;min-height:20px}
-.login-hint{font-size:12px;color:var(--text-muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
-
-/* Header */
-.header{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(110,135,176,.3)}
-.header-left{display:flex;align-items:center;gap:16px}
-.header-title{font-size:22px;font-weight:700;letter-spacing:1px}
-.header-date{font-size:13px;opacity:.85;background:rgba(255,255,255,.15);padding:4px 12px;border-radius:20px}
-.header-right{display:flex;align-items:center;gap:12px}
-.last-updated{font-size:12px;opacity:.7}
-.btn-refresh{background:#fff;color:var(--primary);border:none;padding:8px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s}
-.btn-refresh:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15)}
-.btn-header{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);padding:8px 16px;border-radius:8px;font-size:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px}
-.btn-header:hover{background:rgba(255,255,255,.25)}
-
-/* Container */
-.container{max-width:1200px;margin:0 auto;padding:24px 32px}
-
-/* Tabs */
-.tabs{display:flex;gap:4px;margin-bottom:20px;background:#fff;border-radius:var(--radius);padding:6px;box-shadow:var(--shadow)}
-.tab{padding:10px 24px;border:none;background:none;font-size:14px;font-weight:500;color:var(--text-light);cursor:pointer;border-radius:8px;transition:all .2s;white-space:nowrap}
-.tab:hover{background:rgba(110,135,176,.08)}
-.tab.active{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(110,135,176,.3)}
-
-/* Section title */
-.section-title{font-size:18px;font-weight:700;color:var(--primary);margin:24px 0 12px;padding-left:12px;border-left:4px solid var(--primary)}
-
-/* Summary cards */
-.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
-.card{background:#fff;border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);position:relative;overflow:hidden;transition:transform .2s}
-.card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
-.card-label{font-size:12px;color:var(--text-muted);margin-bottom:6px}
-.card-value{font-size:28px;font-weight:700;line-height:1.2}
-.card-unit{font-size:13px;font-weight:400;color:var(--text-muted);margin-left:4px}
-.card-icon{position:absolute;top:12px;right:14px;font-size:24px;opacity:.15}
-.card.active .card-value{color:var(--primary)}
-.card.hc .card-value{color:var(--primary)}
-.card.leaving .card-value{color:#E8A838}
-.card.trial .card-value{color:#7B68EE}
-.card.gap .card-value{color:var(--gap-green)}  /* 默认=负数(超编)=绿 */
-.card.gap.positive .card-value{color:var(--gap-red)}  /* 正数(缺口)=红 */
-.card.gap.zero .card-value{color:var(--gap-gray)}
-
-/* Department summary inline */
-.dept-summary-bar{background:#fff;border-radius:var(--radius);padding:14px 20px;box-shadow:var(--shadow);margin-bottom:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
-.dept-summary-bar .dept-name{font-size:16px;font-weight:700;color:var(--primary)}
-.dept-summary-bar .summary-item{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-light)}
-.dept-summary-bar .summary-item strong{font-size:18px;font-weight:700;color:var(--text)}
-.dept-summary-bar .summary-item.gap strong{font-size:20px}
-.dept-summary-bar .summary-item.gap-negative strong{color:var(--gap-green)}  /* 负数(超编)=绿 */
-.dept-summary-bar .summary-item.gap-positive strong{color:var(--gap-red)}  /* 正数(缺口)=红 */
-.dept-summary-bar .summary-item.gap-zero strong{color:var(--gap-gray)}
-
-/* Table */
-.table-wrap{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:24px}
-table{width:100%;border-collapse:collapse}
-th{background:rgba(110,135,176,.05);padding:12px 16px;text-align:left;font-size:13px;font-weight:600;color:var(--text-light);border-bottom:2px solid var(--border);white-space:nowrap}
-td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:14px}
-tr:last-child td{border-bottom:none}
-tr:hover{background:rgba(110,135,176,.03)}
-.gap-cell{font-weight:700;font-size:15px}
-.gap-negative{color:var(--gap-green)}  /* 负数(超编)=绿 */
-.gap-positive{color:var(--gap-red)}  /* 正数(缺口)=红 */
-.gap-zero{color:var(--gap-gray)}
-.remark-text{font-size:13px;color:var(--text-light);padding:4px 8px;background:rgba(110,135,176,.04);border-radius:4px;display:inline-block;max-width:280px;word-break:break-all}
-
-/* Edit mode */
-.remark-input{width:100%;min-width:200px;padding:6px 10px;border:1px solid var(--primary);border-radius:6px;font-size:13px;font-family:inherit;background:#fff;outline:none;transition:box-shadow .2s}
-.remark-input:focus{border-color:var(--primary-dark);box-shadow:0 0 0 3px rgba(110,135,176,.15)}
-.edit-save-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:linear-gradient(135deg,rgba(110,135,176,.08),rgba(110,135,176,.04));border-radius:10px;margin-bottom:14px;border:1px dashed var(--primary)}
-.btn-save{padding:8px 16px;background:var(--primary);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
-.btn-save:hover{background:var(--primary-dark);transform:translateY(-1px)}
-.edit-hint{font-size:12px;color:var(--text-muted);flex:1;min-width:240px}
-.toast.error{background:var(--gap-red);color:#fff}
-
-/* Badge */
-.viewer-badge{position:fixed;bottom:16px;right:16px;background:rgba(110,135,176,.12);color:var(--primary);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;z-index:100}
-
-/* Toast */
-.toast{position:fixed;top:80px;right:32px;padding:14px 24px;border-radius:8px;font-size:14px;font-weight:500;z-index:2000;opacity:0;transform:translateX(20px);transition:all .3s;pointer-events:none}
-.toast.show{opacity:1;transform:translateX(0)}
-.toast.success{background:var(--gap-green);color:#fff}
-.toast.info{background:var(--primary);color:#fff}
-
-/* Loading */
-.loading-overlay{display:flex;align-items:center;justify-content:center;min-height:400px;color:var(--text-muted)}
-
-/* Responsive */
-@media(max-width:768px){
-  .cards{grid-template-columns:repeat(2,1fr)}
-  .container{padding:16px}
-  .header{padding:12px 16px}
-  .header-title{font-size:18px}
-  .dept-summary-bar{gap:12px}
-}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:linear-gradient(135deg,#6d28d9,#a21caf);color:#fff;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+  .box{padding:28px 36px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);max-width:560px;width:100%}
+  h1{font-size:22px;margin:0 0 10px}
+  #msg{font-size:15px;opacity:.95;line-height:1.7;margin-bottom:18px}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}
+  @keyframes s{to{transform:rotate(360deg)}}
+  .small{font-size:12px;opacity:.75;margin-top:18px;line-height:1.7}
+  .small a{color:#fde68a}
 </style>
 </head>
 <body>
-
-<!-- 看板（直接显示，无需密码） -->
-<div id="dashboard">
-  <div class="header">
-    <div class="header-left">
-      <div class="header-title">常州仓人力缺口看板 <span style="display:inline-block;padding:2px 9px;border-radius:10px;background:#E8A838;color:#fff;font-size:12px;font-weight:600;vertical-align:middle;margin-left:6px">📷 共享快照版</span></div>
-      <div class="header-date" id="headerDate">--</div>
-    </div>
-    <div class="header-right">
-      <div class="last-updated" id="lastUpdated">--</div>
-      <button class="btn-header" id="btnEditRemark" onclick="tryEnterEditMode()">✏️ 编辑备注</button>
-      <button class="btn-header" id="btnExitEdit" style="display:none" onclick="exitEditMode()">🔒 退出编辑</button>
-      <button class="btn-refresh" id="btnRefresh" onclick="fetchLatestData()">
-        <span>↻</span> <span id="refreshText">刷新</span>
-      </button>
-    </div>
+  <div class="box">
+    <h1>常州仓人力缺口看板</h1>
+    <div id="msg"><span class="spin"></span>正在打开看板…</div>
   </div>
-
-  <div class="container">
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('overview', event)">总体概览</button>
-      <button class="tab" onclick="switchTab('质检验机', event)">质检验机</button>
-      <button class="tab" onclick="switchTab('质检辅助', event)">质检辅助</button>
-      <button class="tab" onclick="switchTab('仓储', event)">仓储</button>
-    </div>
-    <div id="content">
-      <div class="loading-overlay">加载中...</div>
-    </div>
-  </div>
-</div>
-
-<div class="viewer-badge">👁️ 查看模式</div>
-<div class="toast" id="toast"></div>
-
 <script>
-// ========== 内嵌数据（部署时注入） ==========
-const DASHBOARD_DATA = {"date":"2026-09-10","departments":{"质检验机":{"c5_groups":[{"name":"一人屋","active":11,"hc":11,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"外观一组","active":19,"hc":21,"leaving":0,"trial":0,"gap":2,"recruit":2,"c4s":["质检验机"]},{"name":"拆修二组","active":16,"hc":16,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"拆修一组","active":31,"hc":31,"leaving":1,"trial":0,"gap":1,"recruit":1,"c4s":["质检验机"]},{"name":"功能一组","active":45,"hc":50,"leaving":2,"trial":4,"gap":3,"recruit":7,"c4s":["质检验机"]},{"name":"功能二组","active":5,"hc":5,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"笔记本","active":28,"hc":28,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]}],"total":{"active":155,"hc":162,"leaving":3,"trial":4,"gap":6,"recruit":10}},"质检辅助":{"c5_groups":[{"name":"APP一组","active":55,"hc":61,"leaving":0,"trial":3,"gap":3,"recruit":6,"c4s":["质检辅助"]},{"name":"自动化支持","active":32,"hc":32,"leaving":0,"trial":1,"gap":-1,"recruit":2,"c4s":["质检辅助"]},{"name":"隐私清除","active":14,"hc":15,"leaving":0,"trial":0,"gap":1,"recruit":0,"c4s":["质检辅助"]},{"name":"拍照一组","active":31,"hc":38,"leaving":1,"trial":0,"gap":8,"recruit":8,"c4s":["质检辅助"]}],"total":{"active":132,"hc":146,"leaving":1,"trial":4,"gap":11,"recruit":16}},"仓储":{"c5_groups":[{"name":"发货二组","active":21,"hc":21,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["仓储"]},{"name":"发货三组","active":24,"hc":25,"leaving":2,"trial":0,"gap":3,"recruit":3,"c4s":["仓储"]},{"name":"发货一组","active":21,"hc":22,"leaving":0,"trial":0,"gap":1,"recruit":0,"c4s":["仓储"]},{"name":"收货","active":29,"hc":29,"leaving":1,"trial":0,"gap":1,"recruit":1,"c4s":["仓储"]},{"name":"立库服务支持","active":8,"hc":7,"leaving":0,"trial":0,"gap":-1,"recruit":0,"c4s":["仓储"]}],"total":{"active":103,"hc":104,"leaving":3,"trial":0,"gap":4,"recruit":4}}},"c5_groups":[{"name":"一人屋","active":11,"hc":11,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"APP一组","active":55,"hc":61,"leaving":0,"trial":3,"gap":3,"recruit":6,"c4s":["质检辅助"]},{"name":"外观一组","active":19,"hc":21,"leaving":0,"trial":0,"gap":2,"recruit":2,"c4s":["质检验机"]},{"name":"拆修二组","active":16,"hc":16,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"自动化支持","active":32,"hc":32,"leaving":0,"trial":1,"gap":-1,"recruit":2,"c4s":["质检辅助"]},{"name":"拆修一组","active":31,"hc":31,"leaving":1,"trial":0,"gap":1,"recruit":1,"c4s":["质检验机"]},{"name":"发货二组","active":21,"hc":21,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["仓储"]},{"name":"隐私清除","active":14,"hc":15,"leaving":0,"trial":0,"gap":1,"recruit":0,"c4s":["质检辅助"]},{"name":"功能一组","active":45,"hc":50,"leaving":2,"trial":4,"gap":3,"recruit":7,"c4s":["质检验机"]},{"name":"拍照一组","active":31,"hc":38,"leaving":1,"trial":0,"gap":8,"recruit":8,"c4s":["质检辅助"]},{"name":"异常","active":10,"hc":0,"leaving":0,"trial":0,"gap":-10,"recruit":-10,"c4s":["服务支持常州组"]},{"name":"发货三组","active":24,"hc":25,"leaving":2,"trial":0,"gap":3,"recruit":3,"c4s":["仓储"]},{"name":"发货一组","active":21,"hc":22,"leaving":0,"trial":0,"gap":1,"recruit":0,"c4s":["仓储"]},{"name":"功能二组","active":5,"hc":5,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"收货","active":29,"hc":29,"leaving":1,"trial":0,"gap":1,"recruit":1,"c4s":["仓储"]},{"name":"笔记本","active":28,"hc":28,"leaving":0,"trial":0,"gap":0,"recruit":0,"c4s":["质检验机"]},{"name":"立库服务支持","active":8,"hc":7,"leaving":0,"trial":0,"gap":-1,"recruit":0,"c4s":["仓储"]},{"name":"商家服务","active":4,"hc":0,"leaving":0,"trial":0,"gap":-4,"recruit":-4,"c4s":["服务支持常州组"]}],"total":{"active":404,"hc":412,"leaving":7,"trial":8,"gap":7,"recruit":16}};
-;
-let REMARKS = {"功能&外观二组":"补1","拍照一组":"补拍照8","APP一组":"APP 3，笔记本驱动2","自动化支持":"哥斯拉1,007 1","拆修一组":"暂不补","发货三组":"补兼职3","功能一组":"补4","隐私清除":"补1"};
-const PASSWORD_HASH = 'e5d9596eead851cabbaadfacf670755d8ae426b3155386dbff44f32e54e5b55e';
+  // ============================================================
+  // 入口页（2026-09-08 终态）：
+  //   默认行为 → 直接跳【共享快照版】（所有设备都能开，永久稳定）
+  //   ?me=1   → 跳【实时版】（仅本机 server.js 在跑时可用）
+  //   实时版与快照版都已是稳定链接（一个对内、一个对外）
+  // ============================================================
+  var LOCAL_URL = 'http://localhost:3000';
 
-// ========== Toast 提示 ==========
-let _toastTimer = null;
-function showToast(msg, type) {
-  const el = document.getElementById('toast');
-  if (!el) return;
-  el.className = 'toast show ' + (type === 'ok' ? 'success' : type === 'err' ? 'error' : 'info');
-  el.textContent = msg;
-  if (_toastTimer) clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => { el.className = 'toast ' + (type === 'ok' ? 'success' : type === 'err' ? 'error' : 'info'); }, 2400);
-}
-
-// ========== 拉取最新数据 ==========
-// 数据托管在 GitHub Pages CDN（用户网络下 0.3-0.6s 通，raw.githubusercontent.com 被飞连拦）：
-//   https://jian423.github.io/gap-entry/data.json
-// 更新流程：本地跑 read_feishu_data.py → 跟我说"刷新数据" → 我 PUT 这个文件 → 刷新按钮拉新数据。
-// 不需要重新部署 HTML。
-// 多源 fallback：jsDelivr（对 query 敏感、缓存短，主源）→ GitHub Pages（备用）
-// 2026-09-10：本机 server.js 的自动同步器会把最新数据 PUT 到这里，共享版自动跟随。
-const DATA_SOURCES = [
-  'https://cdn.jsdelivr.net/gh/jian423/gap-entry@main/data.json',
-  'https://jian423.github.io/gap-entry/data.json'
-];
-// 依次尝试每个源，返回第一个结构正确的数据
-async function fetchFromSources() {
-  let lastErr = null;
-  for (let i = 0; i < DATA_SOURCES.length; i++) {
-    try {
-      const res = await fetch(DATA_SOURCES[i] + '?_=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) { lastErr = new Error('HTTP ' + res.status); continue; }
-      const j = await res.json();
-      if (!j.date || !j.departments) { lastErr = new Error('数据格式不对'); continue; }
-      return j;
-    } catch (e) { lastErr = e; }
+  // 共享快照版（CloudStudio）跳转逻辑
+  var SOURCES = [
+    './gap_url.json',
+    'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'
+  ];
+  function goStatic(){
+    var i = 0;
+    function next(){
+      if (i >= SOURCES.length) {
+        document.getElementById('msg').innerHTML = '⚠️ 共享看板暂不可达，请稍后重试';
+        return;
+      }
+      fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
+        .then(function(r){ if(!r.ok) throw new Error('http '+r.status); return r.json(); })
+        .then(function(d){
+          if (d && d.url) window.location.replace(d.url);
+          else next();
+        })
+        .catch(function(){ i++; next(); });
+    }
+    next();
   }
-  throw lastErr || new Error('所有数据源均不可用');
-}
-let _refreshing = false;
-async function fetchLatestData(silent) {
-  if (_refreshing) return;
-  _refreshing = true;
-  const btn = document.getElementById('btnRefresh');
-  const txt = document.getElementById('refreshText');
-  if (btn) btn.disabled = true;
-  if (txt) txt.textContent = '刷新中…';
-  try {
-    // 多源依次尝试，绕过 CDN 缓存
-    const j = await fetchFromSources();
-    // 覆盖内嵌默认值
-    DASHBOARD_DATA.date = j.date;
-    DASHBOARD_DATA.departments = j.departments;
-    DASHBOARD_DATA.total = j.total;
-    REMARKS = j.remarks || {};
-    // 清除编辑模式下的本地草稿（如果有新数据就别用旧草稿）
-    if (state._dirty) state._dirty = {};
-    localStorage.removeItem('cz_dirty_remarks');
-    // 重绘
-    document.getElementById('headerDate').textContent = j.date;
-    document.getElementById('lastUpdated').textContent = '数据日期: ' + j.date + ' · 已同步';
-    renderContent();
-    if (!silent) showToast('✅ 已刷新到 ' + j.date + ' 数据', 'ok');
-  } catch (e) {
-    if (!silent) showToast('❌ 刷新失败: ' + e.message + '（显示的仍是页面内置数据）', 'err');
-  } finally {
-    _refreshing = false;
-    if (btn) btn.disabled = false;
-    if (txt) txt.textContent = '刷新';
-  }
-}
 
-// ========== 状态 ==========
-let state = { currentTab: 'overview', editMode: false, _dirty: {} };
-const DEPT_ORDER = ['质检验机', '质检辅助', '仓储'];
+  var isMe = /[?&]me=1/.test(location.search);
 
-// ========== 密码验证 (SHA-256) ==========
-async function sha256(text) {
-  const buf = new TextEncoder().encode(text);
-  const hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// 编辑模式入口：弹密码框 → 验证通过 → 进入编辑模式
-async function tryEnterEditMode() {
-  if (state.editMode) return;
-  const pwd = prompt('🔐 请输入管理员密码（仅编辑备注时需要）');
-  if (pwd === null) return; // 用户取消
-  if (!pwd.trim()) { showToast('请输入密码', 'err'); return; }
-  try {
-    const hash = await sha256(pwd.trim());
-    if (hash === PASSWORD_HASH) {
-      // 把会话期间编辑过的备注从 localStorage 读回来（个人草稿）
-      const saved = JSON.parse(localStorage.getItem('cz_remark_drafts') || '{}');
-      Object.assign(REMARKS, saved);
-      state.editMode = true;
-      document.getElementById('btnEditRemark').style.display = 'none';
-      document.getElementById('btnExitEdit').style.display = 'flex';
-      renderContent();
-      showToast('已进入编辑模式，可直接修改备注', 'ok');
-    } else {
-      showToast('❌ 密码错误', 'err');
-    }
-  } catch (e) {
-    showToast('验证失败: ' + e.message, 'err');
-  }
-}
-
-function exitEditMode() {
-  state.editMode = false;
-  state._dirty = {};
-  document.getElementById('btnEditRemark').style.display = 'flex';
-  document.getElementById('btnExitEdit').style.display = 'none';
-  renderContent();
-  showToast('已退出编辑模式', 'ok');
-}
-
-function showDashboard() {
-  document.getElementById('headerDate').textContent = DASHBOARD_DATA.date || '--';
-  document.getElementById('lastUpdated').textContent = '数据日期: ' + (DASHBOARD_DATA.date || '--') + ' · 点↻同步最新';
-  renderContent();
-}
-
-// ========== 渲染 ==========
-function renderCardsFromTotal(total) {
-  const gapClass = total.gap < 0 ? '' : total.gap > 0 ? 'positive' : 'zero';
-  return `
-    <div class="cards">
-      <div class="card active"><div class="card-icon">👤</div><div class="card-label">在职人数</div><div class="card-value">${total.active||0}<span class="card-unit">人</span></div></div>
-      <div class="card hc"><div class="card-icon">📋</div><div class="card-label">HC编制</div><div class="card-value">${total.hc||0}<span class="card-unit">人</span></div></div>
-      <div class="card leaving"><div class="card-icon">⏳</div><div class="card-label">待离职</div><div class="card-value">${total.leaving||0}<span class="card-unit">人</span></div></div>
-      <div class="card trial"><div class="card-icon">🔄</div><div class="card-label">试岗</div><div class="card-value">${total.trial||0}<span class="card-unit">人</span></div></div>
-      <div class="card gap ${gapClass}"><div class="card-icon">📊</div><div class="card-label">缺口</div><div class="card-value">${total.gap||0}<span class="card-unit">人</span></div></div>
-    </div>`;
-}
-
-function renderDeptSummaryBar(dept, total) {
-  const gapCls = total.gap < 0 ? 'gap-negative' : total.gap > 0 ? 'gap-positive' : 'gap-zero';
-  return `<div class="dept-summary-bar">
-    <span class="dept-name">${dept}</span>
-    <span class="summary-item">在职 <strong>${total.active}</strong></span>
-    <span class="summary-item">HC <strong>${total.hc}</strong></span>
-    <span class="summary-item">待离职 <strong>${total.leaving}</strong></span>
-    <span class="summary-item">试岗 <strong>${total.trial}</strong></span>
-    <span class="summary-item gap ${gapCls}">缺口 <strong>${total.gap}</strong></span>
-  </div>`;
-}
-
-function escapeHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function renderC5Table(dept, d) {
-  const t = d.total;
-  const gapCls = t.gap < 0 ? 'gap-negative' : t.gap > 0 ? 'gap-positive' : 'gap-zero';
-  const rows = d.c5_groups.map(g => {
-    const cls = g.gap < 0 ? 'gap-negative' : g.gap > 0 ? 'gap-positive' : 'gap-zero';
-    const remark = REMARKS[g.name] || '';
-    let remarkHtml;
-    if (state.editMode) {
-      remarkHtml = `<input type="text" class="remark-input" data-group="${escapeHtml(g.name)}" value="${escapeHtml(remark)}" placeholder="点击输入备注" />`;
-    } else {
-      remarkHtml = remark ? `<span class="remark-text">${escapeHtml(remark)}</span>` : '<span style="color:var(--text-muted);font-size:12px">-</span>';
-    }
-    return `<tr>
-      <td>${g.name}</td>
-      <td>${g.active}</td>
-      <td>${g.hc}</td>
-      <td>${g.leaving}</td>
-      <td>${g.trial}</td>
-      <td class="gap-cell ${cls}">${g.gap}</td>
-      <td>${remarkHtml}</td>
-    </tr>`;
-  }).join('');
-
-  // 编辑模式额外显示"保存备注"按钮 + 提示
-  const saveBar = state.editMode ? `<div class="edit-save-bar">
-    <button class="btn-save" onclick="saveRemarks()">💾 保存备注到本地</button>
-    <button class="btn-save" onclick="copyRemarksToClipboard()">📋 复制所有备注</button>
-    <span class="edit-hint">💡 静态版无后端，编辑后保存到浏览器本地，复制可发给管理员同步</span>
-  </div>` : '';
-
-  return `<div class="table-wrap">
-    ${saveBar}
-    <table>
-      <thead><tr>
-        <th>C5组别</th><th>在职</th><th>HC</th><th>待离职</th><th>试岗</th><th>缺口</th><th style="min-width:240px">备注</th>
-      </tr></thead>
-      <tbody>${rows}
-        <tr style="background:rgba(110,135,176,.06);font-weight:600">
-          <td>合计</td><td>${t.active}</td><td>${t.hc}</td><td>${t.leaving}</td><td>${t.trial}</td>
-          <td class="gap-cell ${gapCls}">${t.gap}</td><td></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>`;
-}
-
-// ========== 编辑备注：保存 / 复制 ==========
-function saveRemarks() {
-  const inputs = document.querySelectorAll('.remark-input');
-  const drafts = JSON.parse(localStorage.getItem('cz_remark_drafts') || '{}');
-  let count = 0;
-  inputs.forEach(inp => {
-    const name = inp.dataset.group;
-    const val = inp.value.trim();
-    if (val) {
-      REMARKS[name] = val;
-      drafts[name] = val;
-      count++;
-    } else {
-      delete REMARKS[name];
-      delete drafts[name];
-    }
-  });
-  localStorage.setItem('cz_remark_drafts', JSON.stringify(drafts));
-  showToast(`✅ 已保存 ${count} 条备注到本地浏览器`, 'ok');
-}
-
-async function copyRemarksToClipboard() {
-  // 先同步所有输入框到 REMARKS
-  const inputs = document.querySelectorAll('.remark-input');
-  const lines = [];
-  lines.push('【常州仓人力缺口看板 · 备注】 数据日期：' + (DASHBOARD_DATA.date || '--'));
-  lines.push('---');
-  inputs.forEach(inp => {
-    if (inp.value.trim()) {
-      lines.push(`${inp.dataset.group}: ${inp.value.trim()}`);
-    }
-  });
-  const text = lines.join('\n');
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast('📋 已复制到剪贴板，可粘贴发给管理员', 'ok');
-  } catch (e) {
-    // 兜底：弹窗显示
-    prompt('请复制以下内容发给管理员：', text);
-  }
-}
-
-function renderContent() {
-  const container = document.getElementById('content');
-  if (state.currentTab === 'overview') {
-    let html = renderCardsFromTotal(DASHBOARD_DATA.total);
-    html += '<div class="section-title">各部门明细</div>';
-    for (const dept of DEPT_ORDER) {
-      const d = DASHBOARD_DATA.departments[dept];
-      if (!d) continue;
-      html += renderDeptSummaryBar(dept, d.total);
-      html += renderC5Table(dept, d);
-    }
-    container.innerHTML = html;
+  if (isMe) {
+    document.getElementById('msg').innerHTML = '<span class="spin"></span>正在打开本机实时版…';
+    window.location.replace(LOCAL_URL);
   } else {
-    const d = DASHBOARD_DATA.departments[state.currentTab];
-    if (!d) { container.innerHTML = '<div class="loading-overlay">无数据</div>'; return; }
-    let html = renderCardsFromTotal(d.total);
-    html += '<div class="section-title">' + state.currentTab + ' C5组别明细</div>';
-    html += renderC5Table(state.currentTab, d);
-    container.innerHTML = html;
+    goStatic();
   }
-}
-
-function switchTab(tab, evt) {
-  state.currentTab = tab;
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  if (evt) evt.currentTarget.classList.add('active');
-  renderContent();
-}
-
-// ========== 启动 ==========
-// 读取 localStorage 里的备注草稿（个人编辑持久化）
-const saved = JSON.parse(localStorage.getItem('cz_remark_drafts') || '{}');
-Object.assign(REMARKS, saved);
-showDashboard();
-// 启动后静默 fetch 一次 GitHub 最新数据（不弹 toast）；失败时保持页面内置数据
-setTimeout(() => fetchLatestData(true), 800);
 </script>
 </body>
 </html>
