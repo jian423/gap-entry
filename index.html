@@ -6,66 +6,119 @@
 <title>常州仓人力缺口看板</title>
 <style>
   body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-    background:linear-gradient(135deg,#6d28d9,#a21caf);color:#fff;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
-  .box{padding:28px 36px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(6px);max-width:520px;width:100%}
-  h1{font-size:22px;margin:0 0 10px}
-  #msg{font-size:15px;opacity:.95;line-height:1.7}
-  .spin{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-2px;margin-right:6px}
-  @keyframes s{to{transform:rotate(360deg)}}
-  .small{font-size:12px;opacity:.75;margin-top:16px;line-height:1.7}
-  .small a{color:#fde68a}
+    background:#fffaf0;color:#3f3f46;min-height:100vh;padding:20px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-size:21px;margin:0 0 4px;color:#1f2937}
+  .sub{font-size:13px;color:#6b7280;margin-bottom:16px}
+  .badge{display:inline-block;font-size:12px;padding:2px 9px;border-radius:999px;margin-left:8px;vertical-align:2px}
+  .b-read{background:#fef3c7;color:#92400e}
+  .b-live{background:#dcfce7;color:#166534}
+  .cards{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 22px}
+  .card{flex:1;min-width:118px;background:#fff;border:1px solid #f3e8ff;border-radius:12px;
+    padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card .k{font-size:12px;color:#8b8b9e;margin-bottom:4px}
+  .card .v{font-size:24px;font-weight:600;line-height:1.1}
+  h2{font-size:16px;margin:26px 0 8px;color:#111827}
+  table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:10px;overflow:hidden}
+  th{background:#fdf2d0;color:#7c5e10;font-weight:600;text-align:right;padding:8px 10px;border-bottom:1px solid #f1e7c8}
+  th:first-child{text-align:left}
+  td{padding:8px 10px;text-align:right;border-bottom:1px solid #f5f5f5;color:#3f3f46}
+  td:first-child{text-align:left;font-weight:500}
+  tr:last-child td{border-bottom:none}
+  tr.total-row td{background:#fafafa;font-weight:600;color:#111827}
+  .g-pos{color:#dc2626;font-weight:600}
+  .g-neg{color:#16a34a;font-weight:600}
+  .g-zero{color:#9ca3af}
+  .tip{margin-top:28px;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;
+    padding:12px 14px;font-size:13px;color:#7f1d1d;line-height:1.7}
+  .tip code{background:#fff;padding:1px 6px;border-radius:4px;border:1px solid #fecaca}
+  .tip button{margin-top:8px;background:#dc2626;color:#fff;border:none;border-radius:7px;
+    padding:7px 14px;font-size:13px;cursor:pointer}
+  a{color:#b45309}
 </style>
 </head>
 <body>
-  <div class="box">
-    <h1>常州仓人力缺口看板</h1>
-    <div id="msg"><span class="spin"></span>正在打开看板…</div>
-    <div class="small" id="hint"></div>
+<div class="wrap">
+  <h1>常州仓人力缺口看板<span id="badge"></span></h1>
+  <div class="sub" id="sub">正在检测本机实时版…</div>
+
+  <div id="loading" class="cards"><div class="card"><div class="k">加载中</div><div class="v">…</div></div></div>
+
+  <div id="readonly" style="display:none">
+    <div id="cards"></div>
+    <div id="tables"></div>
+    <div class="tip" id="tip" style="display:none">
+      <b>当前是只读在线版</b>（能看到最新数据，但不能改）。<br>
+      想编辑备注，需要先把本机看板服务打开 —— 在项目文件夹里<b>双击 <code>start.command</code></b>，
+      然后再刷新本页即可进入可编辑的实时版（编辑密码 <code>czgap2026</code>）。
+      <br><button onclick="tryLocal()">重新检测本机实时版</button>
+    </div>
   </div>
+</div>
+
 <script>
-  // ============================================================
-  // 入口页（2026-09-11 加固版）
-  //  - 硬编码当前有效的看板地址（CloudStudio 永久链接）
-  //  - gap_url.json 只作为"可被覆盖"的可选源，且会做安全性校验：
-  //    凡是 trycloudflare / localhost.run 这类临时隧道域名一律丢弃
-  //    （历史坑：9-10 隧道看门狗把已回收的临时域名写进 gap_url.json，
-  //     导致入口页跳死链、用户看到"无法连接"）
-  // ============================================================
-  var HARD_CODED_URL = 'https://62208a9a7b8b487bb815254bada41cc5.app.codebuddy.work';
-  var LOCAL_URL      = 'http://localhost:3000';
-  var SOURCES = ['./gap_url.json', 'https://raw.githubusercontent.com/jian423/gap-entry/main/gap_url.json'];
+// ============================================================
+// 入口页（2026-10-07 重写）
+//  1) 优先跳本机实时版 http://localhost:3000 —— 唯一带后端、可编辑备注的新版
+//     （旧版 CloudStudio 实例是前端硬编码旧密码 hash 的旧代码，必然提示"密码错误"）
+//  2) 本机服务未启动 → 退化为只读在线版，直接渲染仓库内 data.json（永不开天窗）
+// ============================================================
+var LOCAL   = 'http://localhost:3000';
+var RAWDATA = 'https://raw.githubusercontent.com/jian423/gap-entry/main/data.json';
+var DATA_SOURCE = RAWDATA;   // 本机版可用时以本机 /api/data 为准
 
-  // 临时隧道域名 = 死链，坚决不用
-  function isDeadTunnelUrl(u) {
-    if (!u) return true;
-    return /trycloudflare\.com|localhost\.run|loca\.lt|ngrok|serveo|lhr\.life/i.test(u);
-  }
+function gapColor(v){ return v>0 ? 'g-pos' : (v<0 ? 'g-neg' : 'g-zero'); }
 
-  function go(u) { window.location.replace(u); }
+function render(d){
+  var t = d.total || {};
+  var cards = [['在职',t.active],['HC目标',t.hc],['待离职',t.leaving],['试岗',t.trial],['缺口',t.gap],['待招',t.recruit]];
+  document.getElementById('cards').innerHTML = cards.map(function(c){
+    var cls = c[0]==='缺口' ? gapColor(c[1]) : '';
+    return '<div class="card"><div class="k">'+c[0]+'</div><div class="v '+cls+'">'+c[1]+'</div></div>';
+  }).join('');
 
-  // 读 gap_url.json（可选），校验通过才用，否则用硬编码地址
-  function trySource(i) {
-    if (i >= SOURCES.length) { go(HARD_CODED_URL); return; }
-    fetch(SOURCES[i] + '?t=' + Date.now(), { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw 0; return r.json(); })
-      .then(function (d) {
-        if (d && d.url && !isDeadTunnelUrl(d.url)) go(d.url);
-        else trySource(i + 1);   // 是死链/空 → 换下一个源，最终兜底用硬编码
-      })
-      .catch(function () { trySource(i + 1); });
-  }
+  var heads = ['C5小组','在职','HC','待离职','试岗','缺口','待招'];
+  var html = '';
+  Object.keys(d.departments||{}).forEach(function(dep){
+    var v = d.departments[dep], rows = v.c5_groups||[], tt = v.total||{};
+    html += '<h2>'+dep+' <span style="font-weight:400;color:#9ca3af;font-size:13px">'+rows.length+'</span></h2>';
+    html += '<table><thead><tr>'+heads.map(function(h,i){return '<th'+(i?'':' style="text-align:left"')+'>'+h+'</th>';}).join('')+'</tr></thead><tbody>';
+    rows.forEach(function(g){
+      html += '<tr><td>'+g.name+'</td><td>'+g.active+'</td><td>'+g.hc+'</td><td>'+g.leaving+'</td>'
+            + '<td>'+g.trial+'</td><td class="'+gapColor(g.gap)+'">'+g.gap+'</td><td>'+(g.recruit||0)+'</td></tr>';
+    });
+    html += '<tr class="total-row"><td>合计</td><td>'+tt.active+'</td><td>'+tt.hc+'</td><td>'+tt.leaving+'</td>'
+          + '<td>'+tt.trial+'</td><td class="'+gapColor(tt.gap)+'">'+tt.gap+'</td><td>'+(tt.recruit||0)+'</td></tr>';
+    html += '</tbody></table>';
+  });
+  document.getElementById('tables').innerHTML = html;
+}
 
-  // ?me=1 → 本机实时版（server.js）
-  if (/[?&]me=1/.test(location.search)) {
-    document.getElementById('msg').innerHTML = '<span class="spin"></span>正在打开本机实时版…';
-    go(LOCAL_URL);
-  } else {
-    trySource(0);
-  }
+function showReadonly(){
+  document.getElementById('badge').innerHTML = '<span class="badge b-read">只读在线版</span>';
+  document.getElementById('sub').textContent = '数据日期：' + (window.__date || '-');
+  document.getElementById('loading')     .style.display = 'none';
+  document.getElementById('tip')         .style.display = 'block';
+  fetch(RAWDATA + '?t=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){ window.__date = d.date; render(d); })
+    .catch(function(){ document.getElementById('tables').innerHTML =
+      '<p style="font-size:13px;color:#9ca3af">数据读取失败，请稍后刷新。</p>'; });
+}
 
-  // 3 秒还没跳走（网络慢/被拦）→ 直接兜底到硬编码地址，不让用户干等
-  setTimeout(function () { go(HARD_CODED_URL); }, 3000);
+// 试跳本机实时版：iframe 能加载成功即说明服务在跑
+var settled = false;
+function tryLocal(){
+  settled = true;
+  window.location.replace(LOCAL + '/');
+}
+var f = document.createElement('iframe');
+f.style.cssText = 'width:0;height:0;border:0;position:absolute;opacity:0';
+f.src = LOCAL + '/';
+f.onload = function(){ if(!settled){ settled = true; window.location.replace(LOCAL + '/'); } };
+f.onerror = function(){ if(!settled){ settled = true; showReadonly(); } };
+document.body.appendChild(f);
+setTimeout(function(){ if(!settled){ settled = true; showReadonly(); } }, 3500);
 </script>
 </body>
 </html>
