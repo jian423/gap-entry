@@ -99,41 +99,58 @@ function showReadonly(){
   document.getElementById('sub').textContent = '数据日期：' + (window.__date || '-');
   document.getElementById('loading')     .style.display = 'none';
   document.getElementById('tip')         .style.display = 'block';
-  // 多源回退：raw 被拦时自动换 jsDelivr（国内一般可达），再不行换 fastly 节点
+  // 多源回退：jsDelivr（国内一般可达）优先，raw 放最后（国内常"挂着不动"）。
+  // 每个源 4 秒强制超时 → 不许白等，超时立刻换下一个源。
   var SOURCES = [
-    'https://raw.githubusercontent.com/jian423/gap-entry/main/data.json',
     'https://fastly.jsdelivr.net/gh/jian423/gap-entry@main/data.json',
-    'https://cdn.jsdelivr.net/gh/jian423/gap-entry@main/data.json'
+    'https://cdn.jsdelivr.net/gh/jian423/gap-entry@main/data.json',
+    'https://raw.githubusercontent.com/jian423/gap-entry/main/data.json'
   ];
+  document.getElementById('tables').innerHTML =
+    '<p style="font-size:13px;color:#9ca3af">正在加载最新数据…</p>';
   (function trySrc(i){
     if (i >= SOURCES.length) {
       document.getElementById('tables').innerHTML =
         '<p style="font-size:13px;color:#9ca3af">数据读取失败（所有源均不可达），请稍后刷新。</p>';
       return;
     }
+    var done = false;
+    var timer = setTimeout(function(){ if(!done){ done = true; trySrc(i + 1); } }, 4000);
     fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
       .then(function(r){ if(!r.ok) throw 0; return r.json(); })
       .then(function(d){
+        if (done) return;
         if (!d || !d.date || !d.departments) throw 0;   // 内容校验，防空文件
+        clearTimeout(timer); done = true;
         window.__date = d.date; render(d);
       })
-      .catch(function(){ trySrc(i + 1); });
+      .catch(function(){ if(!done){ clearTimeout(timer); done = true; trySrc(i + 1); } });
   })(0);
 }
 
-// 试跳本机实时版：iframe 能加载成功即说明服务在跑
+// 试跳本机实时版。优先用接口探测（比 iframe onload 可靠；浏览器对 iframe 失败事件支持不一致）
 var settled = false;
-function tryLocal(){
-  settled = true;
-  window.location.replace(LOCAL + '/');
+function goLocal(){ if(!settled){ settled = true; window.location.replace(LOCAL + '/'); } }
+function giveUp(){ if(!settled){ settled = true; showReadonly(); } }
+(function probeLocal(){
+  var t = setTimeout(function(){ probeIframe(); }, 2500);   // 接口探测超时 → 退回 iframe 探测
+  fetch(LOCAL + '/api/data?probe=' + Date.now(), {cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(function(d){
+      if (d && (d.date || (d.data && d.data.date))) { clearTimeout(t); goLocal(); }
+      else { clearTimeout(t); probeIframe(); }
+    })
+    .catch(function(){ clearTimeout(t); probeIframe(); });
+})();
+function probeIframe(){
+  if (settled) return;
+  var f = document.createElement('iframe');
+  f.style.cssText = 'width:0;height:0;border:0;position:absolute;opacity:0';
+  f.src = LOCAL + '/';
+  f.onload = goLocal;
+  document.body.appendChild(f);
+  setTimeout(giveUp, 2000);
 }
-var f = document.createElement('iframe');
-f.style.cssText = 'width:0;height:0;border:0;position:absolute;opacity:0';
-f.src = LOCAL + '/';
-f.onload = function(){ if(!settled){ settled = true; window.location.replace(LOCAL + '/'); } };
-f.onerror = function(){ if(!settled){ settled = true; showReadonly(); } };
-document.body.appendChild(f);
-setTimeout(function(){ if(!settled){ settled = true; showReadonly(); } }, 3500);
 </script>
 </body>
 </html>
