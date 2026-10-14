@@ -99,32 +99,33 @@ function showReadonly(){
   document.getElementById('sub').textContent = '数据日期：' + (window.__date || '-');
   document.getElementById('loading')     .style.display = 'none';
   document.getElementById('tip')         .style.display = 'block';
-  // 多源回退：jsDelivr（国内一般可达）优先，raw 放最后（国内常"挂着不动"）。
-  // 每个源 4 秒强制超时 → 不许白等，超时立刻换下一个源。
+  // 多源回退。第 1 优先 = 本页面同源的 data.json（和页面走完全相同的网络通道，
+  // 页面能打开它就一定能取到，天然免疫 raw/jsDelivr 被拦）；后 3 个为外部备用源。
+  // 每源 4 秒强制超时，超时立刻换下一个。
   var SOURCES = [
+    'data.json',
     'https://fastly.jsdelivr.net/gh/jian423/gap-entry@main/data.json',
     'https://cdn.jsdelivr.net/gh/jian423/gap-entry@main/data.json',
     'https://raw.githubusercontent.com/jian423/gap-entry/main/data.json'
   ];
-  document.getElementById('tables').innerHTML =
-    '<p style="font-size:13px;color:#9ca3af">正在加载最新数据…</p>';
+  var tbl = document.getElementById('tables');
   (function trySrc(i){
     if (i >= SOURCES.length) {
-      document.getElementById('tables').innerHTML =
-        '<p style="font-size:13px;color:#9ca3af">数据读取失败（所有源均不可达），请稍后刷新。</p>';
+      tbl.innerHTML = '<p style="font-size:13px;color:#9ca3af">数据读取失败（4 个源均不可达），请稍后刷新。</p>';
       return;
     }
+    tbl.innerHTML = '<p style="font-size:13px;color:#9ca3af">正在加载数据…（源 ' + (i+1) + '/' + SOURCES.length + '）</p>';
     var done = false;
     var timer = setTimeout(function(){ if(!done){ done = true; trySrc(i + 1); } }, 4000);
     fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
-      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function(d){
         if (done) return;
-        if (!d || !d.date || !d.departments) throw 0;   // 内容校验，防空文件
+        if (!d || !d.date || !d.departments) throw new Error('数据格式异常');
         clearTimeout(timer); done = true;
         window.__date = d.date; render(d);
       })
-      .catch(function(){ if(!done){ clearTimeout(timer); done = true; trySrc(i + 1); } });
+      .catch(function(e){ if(!done){ clearTimeout(timer); done = true; trySrc(i + 1); } });
   })(0);
 }
 
