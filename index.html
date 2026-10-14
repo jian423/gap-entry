@@ -40,7 +40,7 @@
 <body>
 <div class="wrap">
   <h1>常州仓人力缺口看板<span id="badge"></span></h1>
-  <div class="sub" id="sub">正在检测本机实时版…</div>
+  <div class="sub" id="sub">数据日期：-</div>
 
   <div id="loading" class="cards"><div class="card"><div class="k">加载中</div><div class="v">…</div></div></div>
 
@@ -48,24 +48,22 @@
     <div id="cards"></div>
     <div id="tables"></div>
     <div class="tip" id="tip" style="display:none">
-      <b>当前是只读在线版</b>（能看到最新数据，但不能改）。<br>
-      想编辑备注，需要先把本机看板服务打开 —— 在项目文件夹里<b>双击 <code>start.command</code></b>，
-      然后再刷新本页即可进入可编辑的实时版（编辑密码 <code>czgap2026</code>）。
-      <br><button onclick="tryLocal()">重新检测本机实时版</button>
+      <b>当前是只读在线版</b>。<br>
+      数据来自本机看板最近一次自动同步（通常与实时版相差 3 分钟内），可查看但不可编辑。<br>
+      如需编辑备注或查看最新实时数据，请在运行看板服务的设备上打开本机实时版（编辑密码 <code>czgap2026</code>）。
+      <br><button onclick="window.open(LOCAL+'/','_blank')">打开本机实时版</button>
     </div>
   </div>
 </div>
 
 <script>
 // ============================================================
-// 入口页（2026-10-07 重写）
-//  1) 优先跳本机实时版 http://localhost:3000 —— 唯一带后端、可编辑备注的新版
-//     （旧版 CloudStudio 实例是前端硬编码旧密码 hash 的旧代码，必然提示"密码错误"）
-//  2) 本机服务未启动 → 退化为只读在线版，直接渲染仓库内 data.json（永不开天窗）
+// 入口页（2026-10-14 修正）
+//  1) 本页为只读在线版：直接渲染仓库内 data.json（本机最近一次自动同步的快照）。
+//  2) 不再自动探测/跳转 localhost:3000，避免 GitHub Pages 链接变成本机镜像。
+//  3) 如需编辑，点击"打开本机实时版"按钮，会在新标签页打开 localhost:3000。
 // ============================================================
 var LOCAL   = 'http://localhost:3000';
-var RAWDATA = 'https://raw.githubusercontent.com/jian423/gap-entry/main/data.json';
-var DATA_SOURCE = RAWDATA;   // 本机版可用时以本机 /api/data 为准
 
 function gapColor(v){ return v>0 ? 'g-pos' : (v<0 ? 'g-neg' : 'g-zero'); }
 
@@ -132,38 +130,8 @@ function showReadonly(){
   })(0);
 }
 
-// 试跳本机实时版。优先用接口探测（比 iframe onload 可靠；浏览器对 iframe 失败事件支持不一致）
-var settled = false;
-function goLocal(){ if(!settled){ settled = true; window.location.replace(LOCAL + '/'); } }
-function giveUp(){ if(!settled){ settled = true; showReadonly(); } }
-function probeLocal(){
-  var t = setTimeout(function(){ probeIframe(); }, 2500);   // 接口探测超时 → 退回 iframe 探测
-  fetch(LOCAL + '/api/data?probe=' + Date.now(), {cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){
-      if (d && (d.date || (d.data && d.data.date))) { clearTimeout(t); goLocal(); }
-      else { clearTimeout(t); probeIframe(); }
-    })
-    .catch(function(){ clearTimeout(t); probeIframe(); });
-}
-function probeIframe(){
-  if (settled) return;
-  var f = document.createElement('iframe');
-  f.style.cssText = 'width:0;height:0;border:0;position:absolute;opacity:0';
-  f.src = LOCAL + '/';
-  f.onload = goLocal;
-  document.body.appendChild(f);
-  setTimeout(giveUp, 2000);
-}
-// 供「重新检测本机实时版」按钮调用
-function tryLocal(){
-  settled = false;
-  var ro = document.getElementById('readonly');
-  if (ro) ro.style.display = 'none';
-  document.getElementById('sub').textContent = '正在检测本机实时版…';
-  probeLocal();
-}
-probeLocal();
+// 本页为只读在线版：直接渲染仓库内 data.json，不再自动探测/跳转本机实时版。
+showReadonly();
 </script>
 </body>
 </html>
