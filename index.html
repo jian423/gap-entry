@@ -98,6 +98,9 @@ function showReadonly(){
   document.getElementById('badge').innerHTML = '<span class="badge b-read">只读在线版</span>';
   document.getElementById('sub').textContent = '数据日期：' + (window.__date || '-');
   document.getElementById('loading')     .style.display = 'none';
+  // ★ 关键：卡片/表格都在 #readonly 容器里，它默认 display:none，
+  //   不显式打开的话数据渲染了也看不见（历史 bug：页面永远空白）。
+  document.getElementById('readonly')    .style.display = 'block';
   document.getElementById('tip')         .style.display = 'block';
   // 多源回退。第 1 优先 = 本页面同源的 data.json（和页面走完全相同的网络通道，
   // 页面能打开它就一定能取到，天然免疫 raw/jsDelivr 被拦）；后 3 个为外部备用源。
@@ -133,7 +136,7 @@ function showReadonly(){
 var settled = false;
 function goLocal(){ if(!settled){ settled = true; window.location.replace(LOCAL + '/'); } }
 function giveUp(){ if(!settled){ settled = true; showReadonly(); } }
-(function probeLocal(){
+function probeLocal(){
   var t = setTimeout(function(){ probeIframe(); }, 2500);   // 接口探测超时 → 退回 iframe 探测
   fetch(LOCAL + '/api/data?probe=' + Date.now(), {cache:'no-store'})
     .then(function(r){ if(!r.ok) throw 0; return r.json(); })
@@ -142,7 +145,7 @@ function giveUp(){ if(!settled){ settled = true; showReadonly(); } }
       else { clearTimeout(t); probeIframe(); }
     })
     .catch(function(){ clearTimeout(t); probeIframe(); });
-})();
+}
 function probeIframe(){
   if (settled) return;
   var f = document.createElement('iframe');
@@ -152,6 +155,15 @@ function probeIframe(){
   document.body.appendChild(f);
   setTimeout(giveUp, 2000);
 }
+// 供「重新检测本机实时版」按钮调用
+function tryLocal(){
+  settled = false;
+  var ro = document.getElementById('readonly');
+  if (ro) ro.style.display = 'none';
+  document.getElementById('sub').textContent = '正在检测本机实时版…';
+  probeLocal();
+}
+probeLocal();
 </script>
 </body>
 </html>
