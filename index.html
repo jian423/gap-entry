@@ -99,11 +99,26 @@ function showReadonly(){
   document.getElementById('sub').textContent = '数据日期：' + (window.__date || '-');
   document.getElementById('loading')     .style.display = 'none';
   document.getElementById('tip')         .style.display = 'block';
-  fetch(RAWDATA + '?t=' + Date.now(), {cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
-    .then(function(d){ window.__date = d.date; render(d); })
-    .catch(function(){ document.getElementById('tables').innerHTML =
-      '<p style="font-size:13px;color:#9ca3af">数据读取失败，请稍后刷新。</p>'; });
+  // 多源回退：raw 被拦时自动换 jsDelivr（国内一般可达），再不行换 fastly 节点
+  var SOURCES = [
+    'https://raw.githubusercontent.com/jian423/gap-entry/main/data.json',
+    'https://fastly.jsdelivr.net/gh/jian423/gap-entry@main/data.json',
+    'https://cdn.jsdelivr.net/gh/jian423/gap-entry@main/data.json'
+  ];
+  (function trySrc(i){
+    if (i >= SOURCES.length) {
+      document.getElementById('tables').innerHTML =
+        '<p style="font-size:13px;color:#9ca3af">数据读取失败（所有源均不可达），请稍后刷新。</p>';
+      return;
+    }
+    fetch(SOURCES[i] + '?t=' + Date.now(), {cache:'no-store'})
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(d){
+        if (!d || !d.date || !d.departments) throw 0;   // 内容校验，防空文件
+        window.__date = d.date; render(d);
+      })
+      .catch(function(){ trySrc(i + 1); });
+  })(0);
 }
 
 // 试跳本机实时版：iframe 能加载成功即说明服务在跑
